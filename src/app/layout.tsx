@@ -1,0 +1,55 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { auth, signIn, signOut } from "@/lib/auth";
+import Link from "next/link";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "KiloZero | The Future of Seamless Tracking",
+  description: "Experience absolute precision with KiloZero's seamless hardware integration platform.",
+};
+
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const session = await auth();
+
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <nav className="nav">
+          <Link href="/" className="nav-brand">KiloZero</Link>
+          <div className="nav-links">
+            {session?.user ? (
+              <>
+                {session.user.isAdmin && (
+                  <Link href="/admin/drivers" className="btn-admin">
+                    App Management
+                  </Link>
+                )}
+                <form action={async () => {
+                  "use server"
+                  await signOut()
+                }}>
+                  <button type="submit" className="btn-logout">Sign Out ({session.user.email})</button>
+                </form>
+              </>
+            ) : (
+              <form action={async () => {
+                "use server"
+                await signIn("google")
+              }}>
+                <button type="submit" className="btn-login">Sign in with Google</button>
+              </form>
+            )}
+          </div>
+        </nav>
+        <main>{children}</main>
+      </body>
+    </html>
+  );
+}
