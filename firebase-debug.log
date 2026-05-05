@@ -1,0 +1,29 @@
+[debug] [2026-05-05T23:48:31.766Z] ----------------------------------------------------------------------
+[debug] [2026-05-05T23:48:31.777Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\rbell\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js apphosting:backends:get kilozero-web-1 --project kilozero-prod
+[debug] [2026-05-05T23:48:31.779Z] CLI Version:   15.16.0
+[debug] [2026-05-05T23:48:31.780Z] Platform:      win32
+[debug] [2026-05-05T23:48:31.781Z] Node Version:  v24.14.0
+[debug] [2026-05-05T23:48:31.782Z] Time:          Tue May 05 2026 17:48:31 GMT-0600 (Mountain Daylight Time)
+[debug] [2026-05-05T23:48:31.783Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-05T23:48:32.912Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-05T23:48:32.913Z] > authorizing via signed-in user (kilozero.admin@gmail.com)
+[debug] [2026-05-05T23:48:32.922Z] Checked if tokens are valid: true, expires at: 1778028298837
+[debug] [2026-05-05T23:48:32.923Z] Checked if tokens are valid: true, expires at: 1778028298837
+[debug] [2026-05-05T23:48:32.928Z] >>> [apiv2][query] GET https://firebaseapphosting.googleapis.com/v1beta/projects/kilozero-prod/locations/-/backends 
+[debug] [2026-05-05T23:48:33.494Z] <<< [apiv2][status] GET https://firebaseapphosting.googleapis.com/v1beta/projects/kilozero-prod/locations/-/backends 200
+[debug] [2026-05-05T23:48:33.495Z] <<< [apiv2][body] GET https://firebaseapphosting.googleapis.com/v1beta/projects/kilozero-prod/locations/-/backends {"backends":[{"name":"projects/kilozero-prod/locations/us-east4/backends/kilozero-web-1","createTime":"2026-05-05T22:37:19.462844624Z","updateTime":"2026-05-05T22:37:21.149566Z","uri":"kilozero-web-1--kilozero-prod.us-east4.hosted.app","codebase":{"repository":"projects/kilozero-prod/locations/us-east4/connections/apphosting-github-conn-ahj1b74/gitRepositoryLinks/KiloZero-Labs-kilozero-web","rootDirectory":"/"},"uid":"417714dd-1964-4edd-b458-a2f5ec23e323","etag":"ZfMW-s8DWzvv2E2ZJK15dJ2ZyLS305SzRW-rL6QBUGs","reconciling":false,"servingLocality":"GLOBAL_ACCESS","serviceAccount":"firebase-app-hosting-compute@kilozero-prod.iam.gserviceaccount.com","appId":"1:462818312482:web:38156d07ed96a25fdda57b"}]}
+[info] ┌────────────────┬────────────────────────────┬───────────────────────────────────────────────────────────┬────────────────┬─────────────────────┐
+│ Backend        │ Repository                 │ URL                                                       │ Primary Region │ Updated Date        │
+├────────────────┼────────────────────────────┼───────────────────────────────────────────────────────────┼────────────────┼─────────────────────┤
+│ kilozero-web-1 │ KiloZero-Labs-kilozero-web │ https://kilozero-web-1--kilozero-prod.us-east4.hosted.app │ us-east4       │ 2026-05-05 16:37:21 │
+└────────────────┴────────────────────────────┴───────────────────────────────────────────────────────────┴────────────────┴─────────────────────┘
+[debug] [2026-05-05T23:48:33.559Z] Error: EBUSY: resource busy or locked, unlink 'C:\Antigravity\KiloZero\KiloZero App\kilozero.io_app\frontend_web\firebase-debug.log'
+    at Object.unlinkSync (node:fs:1931:11)
+    at process.<anonymous> (C:\Users\rbell\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\cli.js:44:16)
+    at process.emit (node:events:508:28)
+    at process.exit (node:internal/process/per_thread:236:15)
+    at C:\Users\rbell\AppData\Roaming\npm\node_modules\firebase-tools\lib\command.js:131:25
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[error] 
+[error] Error: An unexpected error has occurred.

@@ -1,6 +1,6 @@
 {
   "apphosting": {
-    "backendId": "kilozero-web",
+    "backendId": "kilozero-web-1",
     "rootDir": "/",
     "ignore": [
       "node_modules",
