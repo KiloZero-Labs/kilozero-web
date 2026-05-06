@@ -49,6 +49,11 @@ export default async function RootLayout({
           </div>
         </nav>
         <main>{children}</main>
+        <footer style={{ textAlign: 'center', padding: '2rem', borderTop: '1px solid #333', marginTop: 'auto' }}>
+          <p style={{ color: '#888', fontSize: '0.9rem' }}>
+            &copy; {new Date().getFullYear()} KiloZero Labs. All rights reserved. | <Link href="/privacy" style={{ color: '#58a6ff', textDecoration: 'none' }}>Privacy Policy</Link>
+          </p>
+        </footer>
       </body>
     </html>
   );

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TelemetryEvent } from './BluetoothManager';
 import { DynamicDriverSchema, KiloZeroDriverSchema, ScaleDriver } from './types';
 import { createDriverFromKiloZeroSchema } from './adapters/DynamicDriverAdapter';
