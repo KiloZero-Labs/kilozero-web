@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { FaServer, FaFlask, FaProjectDiagram, FaUsers, FaCogs } from "react-icons/fa";
+import { auth, ADMIN_WHITELIST } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  if (!session?.user?.email || !ADMIN_WHITELIST.includes(session.user.email.toLowerCase())) {
+    redirect("/");
+  }
   return (
     <div className="admin-layout">
       <aside className="admin-sidebar">
