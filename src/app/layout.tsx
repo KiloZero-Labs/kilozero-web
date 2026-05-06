@@ -26,7 +26,7 @@ export default async function RootLayout({
           <div className="nav-links">
             {session?.user ? (
               <>
-                {session.user.isAdmin && (
+                {(session.user as any).isAdmin && (
                   <Link href="/admin/drivers" className="btn-admin">
                     App Management
                   </Link>

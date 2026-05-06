@@ -18,7 +18,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     session: ({ session, token }) => {
       if (session?.user?.email) {
-        session.user.isAdmin = ADMIN_WHITELIST.includes(session.user.email.toLowerCase());
+        (session.user as any).isAdmin = ADMIN_WHITELIST.includes(session.user.email.toLowerCase());
       }
       return session;
     },
