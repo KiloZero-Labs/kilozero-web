@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
           KiloZero integrates with the Google Health Connect API to read your historical weigh-in metrics (such as Body Mass and Body Fat Percentage) to import them into your local ecosystem. We do not currently write or save data back to Health Connect.
         </p>
         <ul style={{ lineHeight: '1.6', marginLeft: '2rem', marginTop: '0.5rem' }}>
-          <li><strong>Limited Use:</strong> Our use of information received from Health Connect adheres strictly to the <a href="https://developers.google.com/health-connect/terms" style={{ color: '#58a6ff' }} target="_blank" rel="noreferrer">Health Connect Permissions and User Data policies</a>. We request access only to the exact data types required for the app to function (Weight and Body Fat).</li>
+          <li><strong>Limited Use:</strong> Our use of information received from Health Connect adheres strictly to the <a href="https://support.google.com/googleplay/android-developer/answer/9888170" style={{ color: '#58a6ff' }} target="_blank" rel="noreferrer">Health Connect Permissions and User Data policies</a>. We request access only to the exact data types required for the app to function (Weight and Body Fat).</li>
           <li><strong>No Third-Party Sharing:</strong> We unequivocally do <strong>not</strong> sell, transfer, or disclose your Health Connect data to advertising platforms, data brokers, or any other third-party servers. </li>
           <li><strong>Local Execution:</strong> The interaction with Health Connect occurs directly between the KiloZero App on your device and the Android Health Connect system.</li>
         </ul>
