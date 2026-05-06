@@ -32,7 +32,7 @@ export default function PrivacyPolicyPage() {
 
         <h3 style={{ fontSize: '1.3rem', color: '#e6edf3', marginTop: '1.5rem', marginBottom: '0.5rem' }}>b. Google Health Connect API</h3>
         <p style={{ lineHeight: '1.6' }}>
-          KiloZero integrates with the Google Health Connect API to synchronize your weigh-in metrics (such as Body Mass and Body Fat Percentage) across your ecosystem.
+          KiloZero integrates with the Google Health Connect API to read your historical weigh-in metrics (such as Body Mass and Body Fat Percentage) to import them into your local ecosystem. We do not currently write or save data back to Health Connect.
         </p>
         <ul style={{ lineHeight: '1.6', marginLeft: '2rem', marginTop: '0.5rem' }}>
           <li><strong>Limited Use:</strong> Our use of information received from Health Connect adheres strictly to the <a href="https://developers.google.com/health-connect/terms" style={{ color: '#58a6ff' }} target="_blank" rel="noreferrer">Health Connect Permissions and User Data policies</a>. We request access only to the exact data types required for the app to function (Weight and Body Fat).</li>
@@ -46,7 +46,7 @@ export default function PrivacyPolicyPage() {
         </p>
         <ul style={{ lineHeight: '1.6', marginLeft: '2rem', marginTop: '0.5rem' }}>
           <li>This data includes the scale's manufacturer, model number, Bluetooth MAC address, connection success/failure rates, and the raw payload (which includes weight and body fat measurements) directly from the scale.</li>
-          <li>This data is collected strictly for the purpose of reverse-engineering universal hardware drivers and troubleshooting connection instability.</li>
+          <li>This data is collected strictly for the purpose of determining and mapping universal hardware drivers and troubleshooting connection instability.</li>
           <li>This data is decoupled from your user identity.</li>
         </ul>
 
@@ -63,7 +63,7 @@ export default function PrivacyPolicyPage() {
         </p>
         <ul style={{ lineHeight: '1.6', marginLeft: '2rem', marginTop: '0.5rem' }}>
           <li><strong>Local Data:</strong> You may delete specific weight entries within the App. To permanently delete all physiological data associated with KiloZero, you simply need to uninstall the application from your device or clear the App's data via your Android settings.</li>
-          <li><strong>Health Connect Data:</strong> Data written to Health Connect can be managed or deleted directly through the Google Health Connect application.</li>
+          <li><strong>Health Connect Data:</strong> Any data imported from or potentially written to Health Connect in the future can be managed or deleted directly through the Google Health Connect application.</li>
         </ul>
       </section>
 
