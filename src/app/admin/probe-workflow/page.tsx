@@ -12,7 +12,7 @@ export default async function ProbeWorkflowPage() {
     const fs = await import('fs/promises');
     const path = await import('path');
     const enginePath = path.resolve(
-      process.cwd(), '..', 'src', 'backend', 'services', 'ble', 'InferenceEngine.ts'
+      process.cwd(), 'src', 'lib', 'InferenceEngine.ts'
     );
     engineSource = await fs.readFile(enginePath, 'utf-8');
 
