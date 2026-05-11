@@ -193,7 +193,7 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
       {/* ── Main row (always visible) ──────────────────────────────── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr auto auto auto auto auto',
+        gridTemplateColumns: '1fr 100px 120px 280px 180px 120px',
         alignItems: 'center',
         gap: '1rem',
         padding: '0.9rem 1.25rem',
