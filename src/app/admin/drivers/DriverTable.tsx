@@ -54,7 +54,7 @@ function UUIDBlock({ label, uuids }: { label: string; uuids: string[] }) {
   );
 }
 
-function DownloadAllButton({ drivers }: { drivers: Record<string, any> }) {
+function DownloadAllButton({ drivers }: { drivers: any[] }) {
   const handleDownload = () => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const filename = `kilozero-drivers-backup-${timestamp}.json`;
@@ -90,9 +90,32 @@ function DownloadAllButton({ drivers }: { drivers: Record<string, any> }) {
   );
 }
 
-// ── Distribution tier model ───────────────────────────────────────────────────
-// Each tier is a superset of the previous — sets all three flags atomically.
+// ── Dispatcher Tier Model ───────────────────────────────────────────────────
 
+function DispatcherTierBadge({ tier, reason }: { tier: number, reason: string }) {
+  let color = '#6B7280';
+  let label = `TIER ${tier}`;
+  
+  if (tier === 0) { color = '#EF4444'; label = 'TIER 0 (CLOUD)'; }
+  else if (tier === 1) { color = '#10B981'; label = 'TIER 1 (PAYLOAD)'; }
+  else if (tier === 2) { color = '#0EA5E9'; label = 'TIER 2 (GATT)'; }
+  else if (tier === 3) { color = '#8B5CF6'; label = 'TIER 3 (ALIAS)'; }
+  else if (tier === 4) { color = '#6B7280'; label = 'TIER 4 (GENERIC)'; }
+  else if (tier === 5) { color = '#EAB308'; label = 'TIER 5 (BETA)'; }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+      <span style={{
+        backgroundColor: color, color: '#fff',
+        padding: '0.2rem 0.5rem', borderRadius: '4px',
+        fontSize: '0.65rem', fontWeight: 700, width: 'fit-content'
+      }}>{label}</span>
+      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{reason}</span>
+    </div>
+  );
+}
+
+// Legacy distribution tiers for Tier 0
 type DistributionTier = 'unlisted' | 'optional' | 'auto_sync' | 'core';
 
 const TIERS: { value: DistributionTier; label: string; color: string; description: string }[] = [
@@ -210,59 +233,69 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
           <StabilityBadge rating={d.stabilityRating} />
         </div>
 
-        {/* Distribution Tier Dropdown */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: '175px' }}>
-          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Distribution</div>
-          <select
-            value={tier}
-            onChange={e => handleTierChange(e.target.value as DistributionTier)}
+        {/* Dispatcher Tier Badge */}
+        <DispatcherTierBadge tier={d.tier} reason={d.reason} />
+
+        {/* Distribution Tier Dropdown (Only for Tier 0 Dynamic Drivers) */}
+        {d.tier === 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: '175px' }}>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Distribution (OTA)</div>
+            <select
+              value={tier}
+              onChange={e => handleTierChange(e.target.value as DistributionTier)}
+              style={{
+                background: 'var(--surface-hover)',
+                border: `1px solid ${isDirty ? 'rgba(14,165,233,0.5)' : 'var(--border)'}`,
+                borderRadius: '6px',
+                color: TIERS.find(t => t.value === tier)?.color ?? 'var(--text-muted)',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                padding: '0.45rem 0.65rem',
+                cursor: 'pointer',
+                outline: 'none',
+                width: '100%',
+              }}
+            >
+              {TIERS.map(t => (
+                <option key={t.value} value={t.value} style={{ color: t.color, background: '#1a1a2e' }}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+              {TIERS.find(t => t.value === tier)?.description}
+            </div>
+          </div>
+        ) : (
+          <div style={{ minWidth: '175px' }}></div>
+        )}
+
+        {/* Save Button (Only for Tier 0) */}
+        {d.tier === 0 ? (
+          <button
+            onClick={handleSave}
+            disabled={!isDirty || saveStatus === 'saving'}
             style={{
-              background: 'var(--surface-hover)',
-              border: `1px solid ${isDirty ? 'rgba(14,165,233,0.5)' : 'var(--border)'}`,
-              borderRadius: '6px',
-              color: TIERS.find(t => t.value === tier)?.color ?? 'var(--text-muted)',
-              fontWeight: 600,
-              fontSize: '0.82rem',
-              padding: '0.45rem 0.65rem',
-              cursor: 'pointer',
-              outline: 'none',
-              width: '100%',
+              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.5rem 1rem', borderRadius: '6px', border: 'none',
+              fontWeight: 600, fontSize: '0.8rem', cursor: isDirty ? 'pointer' : 'not-allowed',
+              background: saveStatus === 'ok' ? '#10b981'
+                : saveStatus === 'error' ? '#ef4444'
+                : isDirty ? '#0ea5e9' : 'var(--surface-hover)',
+              color: isDirty || saveStatus !== 'idle' ? '#fff' : 'var(--text-muted)',
+              transition: 'all 0.2s',
+              opacity: !isDirty && saveStatus === 'idle' ? 0.5 : 1,
+              minWidth: '110px', justifyContent: 'center',
             }}
           >
-            {TIERS.map(t => (
-              <option key={t.value} value={t.value} style={{ color: t.color, background: '#1a1a2e' }}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-            {TIERS.find(t => t.value === tier)?.description}
-          </div>
-        </div>
-
-
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          disabled={!isDirty || saveStatus === 'saving'}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0.4rem',
-            padding: '0.5rem 1rem', borderRadius: '6px', border: 'none',
-            fontWeight: 600, fontSize: '0.8rem', cursor: isDirty ? 'pointer' : 'not-allowed',
-            background: saveStatus === 'ok' ? '#10b981'
-              : saveStatus === 'error' ? '#ef4444'
-              : isDirty ? '#0ea5e9' : 'var(--surface-hover)',
-            color: isDirty || saveStatus !== 'idle' ? '#fff' : 'var(--text-muted)',
-            transition: 'all 0.2s',
-            opacity: !isDirty && saveStatus === 'idle' ? 0.5 : 1,
-            minWidth: '110px', justifyContent: 'center',
-          }}
-        >
-          {saveStatus === 'saving' ? <><FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
-            : saveStatus === 'ok' ? '✓ Saved'
-            : saveStatus === 'error' ? '✗ Error'
-            : <><FaSave /> Save</>}
-        </button>
+            {saveStatus === 'saving' ? <><FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
+              : saveStatus === 'ok' ? '✓ Saved'
+              : saveStatus === 'error' ? '✗ Error'
+              : <><FaSave /> Save</>}
+          </button>
+        ) : (
+          <div style={{ minWidth: '110px' }}></div>
+        )}
       </div>
 
       {/* ── Accordion body ────────────────────────────────────────── */}
@@ -321,8 +354,23 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
 
 // ── Main export ────────────────────────────────────────────────────────────────
 
-export default function DriverTable({ drivers, adminEmail }: { drivers: Record<string, any>; adminEmail: string }) {
-  const keys = Object.keys(drivers);
+export default function DriverTable({ drivers, adminEmail }: { drivers: any[]; adminEmail: string }) {
+  const [filterTier, setFilterTier] = useState<number | 'all'>('all');
+  const [filterCapability, setFilterCapability] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<'tier_asc' | 'tier_desc' | 'name_asc'>('tier_asc');
+
+  let filtered = drivers.filter(d => {
+    if (filterTier !== 'all' && d.tier !== filterTier) return false;
+    if (filterCapability !== 'all' && !(d.capabilities || []).includes(filterCapability)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (sortOrder === 'tier_asc') return a.tier - b.tier;
+    if (sortOrder === 'tier_desc') return b.tier - a.tier;
+    if (sortOrder === 'name_asc') return (a.brand || '').localeCompare(b.brand || '');
+    return 0;
+  });
 
   return (
     <div>
@@ -331,21 +379,54 @@ export default function DriverTable({ drivers, adminEmail }: { drivers: Record<s
       `}</style>
 
       {/* Toolbar */}
-      {keys.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-          <DownloadAllButton drivers={drivers} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <select value={filterTier} onChange={e => setFilterTier(e.target.value === 'all' ? 'all' : Number(e.target.value))} style={filterSelectStyle}>
+            <option value="all">All Tiers</option>
+            <option value={0}>Tier 0 (Cloud)</option>
+            <option value={1}>Tier 1 (Payload)</option>
+            <option value={2}>Tier 2 (GATT Combo)</option>
+            <option value={3}>Tier 3 (Alias)</option>
+            <option value={4}>Tier 4 (Generic)</option>
+            <option value={5}>Tier 5 (Beta Heuristics)</option>
+          </select>
+          <select value={filterCapability} onChange={e => setFilterCapability(e.target.value)} style={filterSelectStyle}>
+            <option value="all">All Capabilities</option>
+            <option value="weight">Weight</option>
+            <option value="bodyFat">Body Fat (BIA)</option>
+          </select>
+          <select value={sortOrder} onChange={e => setSortOrder(e.target.value as any)} style={filterSelectStyle}>
+            <option value="tier_asc">Sort: Tier (0 → 5)</option>
+            <option value="tier_desc">Sort: Tier (5 → 0)</option>
+            <option value="name_asc">Sort: Name (A → Z)</option>
+          </select>
         </div>
-      )}
 
-      {keys.length === 0 ? (
+        {drivers.length > 0 && (
+          <DownloadAllButton drivers={drivers} />
+        )}
+      </div>
+
+      {filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-          No drivers found in the GCloud registry.
+          No drivers match the current filters.
         </div>
       ) : (
-        keys.map(key => (
-          <DriverRow key={key} driverKey={key} initialData={drivers[key]} adminEmail={adminEmail} />
+        filtered.map(d => (
+          <DriverRow key={d.id} driverKey={d.id} initialData={d} adminEmail={adminEmail} />
         ))
       )}
     </div>
   );
 }
+
+const filterSelectStyle = {
+  background: 'var(--surface-hover)',
+  border: '1px solid var(--border)',
+  color: 'var(--text-muted)',
+  padding: '0.4rem 0.6rem',
+  borderRadius: '6px',
+  outline: 'none',
+  fontSize: '0.8rem',
+  fontWeight: 600
+};
