@@ -204,16 +204,15 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
         padding: '0.9rem 1.25rem',
         cursor: 'pointer',
       }}>
-        {/* Brand / Model / MAC */}
+        {/* Title / MAC */}
         <div onClick={() => setExpanded(e => !e)} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', transition: 'transform 0.2s', display: 'inline-block', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
             <FaChevronRight />
           </span>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{d.brand}</div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{d.model}</div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{d.title || d.brand || 'Unknown Driver'}</div>
             {d.mac && !driverKey.startsWith('STATIC::') && (
-              <div style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: 'var(--primary)', marginTop: '0.1rem' }}>{driverKey}</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: 'var(--primary)', marginTop: '0.2rem' }}>{driverKey}</div>
             )}
           </div>
         </div>
@@ -308,10 +307,25 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
           gridTemplateColumns: '1fr 1fr 1fr',
           gap: '1.5rem',
         }}>
-          {/* Protocol */}
+          {/* Hardware & Protocol */}
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Protocol</div>
-            <div style={{ fontSize: '0.85rem' }}>{d.protocol || '—'}</div>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Supported Hardware</div>
+              {d.supportedHardware && d.supportedHardware.length > 0 ? (
+                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem', color: '#e2e8f0', lineHeight: 1.5 }}>
+                  {d.supportedHardware.map((hw: string, i: number) => (
+                    <li key={i}>{hw}</li>
+                  ))}
+                </ul>
+              ) : (
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>—</div>
+              )}
+            </div>
+            
+            <div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Protocol</div>
+              <div style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>{d.protocol || '—'}</div>
+            </div>
           </div>
 
           {/* UUIDs */}
@@ -352,9 +366,40 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
   );
 }
 
+interface HardwareItem {
+  hardwareName: string;
+  driver: any;
+}
+
+function HardwareRow({ item }: { item: HardwareItem }) {
+  const { hardwareName, driver: d } = item;
+  return (
+    <div style={{
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: '8px',
+      marginBottom: '0.5rem',
+      display: 'grid',
+      gridTemplateColumns: '1.5fr 1fr auto auto',
+      alignItems: 'center',
+      gap: '1rem',
+      padding: '0.75rem 1.25rem',
+    }}>
+      <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{hardwareName}</div>
+      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{d.title || d.brand}</div>
+      <div style={{ display: 'flex', gap: '0.3rem' }}>
+        {(d.capabilities || []).includes('weight') && <CapabilityPill label="Weight" color="#0ea5e9" />}
+        {(d.capabilities || []).includes('bodyFat') && <CapabilityPill label="Body Fat" color="#8b5cf6" />}
+      </div>
+      <DispatcherTierBadge tier={d.tier} reason={d.reason} />
+    </div>
+  );
+}
+
 // ── Main export ────────────────────────────────────────────────────────────────
 
 export default function DriverTable({ drivers, adminEmail }: { drivers: any[]; adminEmail: string }) {
+  const [viewMode, setViewMode] = useState<'driver' | 'hardware'>('driver');
   const [filterTier, setFilterTier] = useState<number | 'all'>('all');
   const [filterCapability, setFilterCapability] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'tier_asc' | 'tier_desc' | 'name_asc'>('tier_asc');
@@ -372,6 +417,16 @@ export default function DriverTable({ drivers, adminEmail }: { drivers: any[]; a
     return 0;
   });
 
+  const hardwareList: HardwareItem[] = [];
+  if (viewMode === 'hardware') {
+    filtered.forEach(d => {
+      (d.supportedHardware || []).forEach((hw: string) => {
+        hardwareList.push({ hardwareName: hw, driver: d });
+      });
+    });
+    hardwareList.sort((a, b) => a.hardwareName.localeCompare(b.hardwareName));
+  }
+
   return (
     <div>
       <style>{`
@@ -379,8 +434,40 @@ export default function DriverTable({ drivers, adminEmail }: { drivers: any[]; a
       `}</style>
 
       {/* Toolbar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          {/* View Toggle */}
+          <div style={{ display: 'flex', background: 'var(--surface-hover)', borderRadius: '8px', padding: '0.25rem', border: '1px solid var(--border)' }}>
+            <button
+              onClick={() => setViewMode('driver')}
+              style={{
+                padding: '0.4rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
+                background: viewMode === 'driver' ? '#0ea5e9' : 'transparent',
+                color: viewMode === 'driver' ? '#fff' : 'var(--text-muted)',
+                transition: 'all 0.2s'
+              }}
+            >
+              Organize by Driver
+            </button>
+            <button
+              onClick={() => setViewMode('hardware')}
+              style={{
+                padding: '0.4rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
+                background: viewMode === 'hardware' ? '#0ea5e9' : 'transparent',
+                color: viewMode === 'hardware' ? '#fff' : 'var(--text-muted)',
+                transition: 'all 0.2s'
+              }}
+            >
+              Organize by Hardware
+            </button>
+          </div>
+          
+          {drivers.length > 0 && (
+            <DownloadAllButton drivers={drivers} />
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           <select value={filterTier} onChange={e => setFilterTier(e.target.value === 'all' ? 'all' : Number(e.target.value))} style={filterSelectStyle}>
             <option value="all">All Tiers</option>
             <option value={0}>Tier 0 (Cloud)</option>
@@ -401,20 +488,28 @@ export default function DriverTable({ drivers, adminEmail }: { drivers: any[]; a
             <option value="name_asc">Sort: Name (A → Z)</option>
           </select>
         </div>
-
-        {drivers.length > 0 && (
-          <DownloadAllButton drivers={drivers} />
-        )}
       </div>
 
-      {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-          No drivers match the current filters.
-        </div>
+      {viewMode === 'driver' ? (
+        filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+            No drivers match the current filters.
+          </div>
+        ) : (
+          filtered.map(d => (
+            <DriverRow key={d.id} driverKey={d.id} initialData={d} adminEmail={adminEmail} />
+          ))
+        )
       ) : (
-        filtered.map(d => (
-          <DriverRow key={d.id} driverKey={d.id} initialData={d} adminEmail={adminEmail} />
-        ))
+        hardwareList.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+            No hardware matches the current filters.
+          </div>
+        ) : (
+          hardwareList.map((item, idx) => (
+            <HardwareRow key={idx} item={item} />
+          ))
+        )
       )}
     </div>
   );

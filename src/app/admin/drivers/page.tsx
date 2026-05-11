@@ -30,10 +30,25 @@ export default async function DriversPage() {
   // Tier 0: Dynamic Cloud Overrides
   for (const [key, driver] of Object.entries(cloudDrivers)) {
     if (driver.isDynamic) {
+      // Parse brand and model for dynamic drivers
+      const brands = (driver.brand || 'Unknown').split('/').map((b: string) => b.trim());
+      const models = (driver.model || 'Unknown').split('/').map((m: string) => m.trim());
+      
+      const hw = [];
+      for (const b of brands) {
+        for (const m of models) {
+          hw.push(`${b} ${m}`);
+        }
+      }
+
+      const generatedTitle = `${brands[0]} ${models[0] !== 'Unknown' ? models[0] : ''} (Cloud Override)`.trim();
+
       unifiedDrivers.push({
         ...driver,
         id: key,
         tier: 0,
+        title: generatedTitle,
+        supportedHardware: hw,
         reason: 'Tier 0: Cloud Override',
       });
     }
@@ -64,6 +79,8 @@ export default async function DriversPage() {
     // Tier 4 is generic, we can push a synthetic one
     unifiedDrivers.push({
       id: 'Generic_GATT_V1',
+      title: 'Generic Standard BLE (GATT)',
+      supportedHardware: ['Standard 181d BLE Scales (Multiple Brands)'],
       brand: 'Generic',
       model: 'Standard BLE Scale',
       capabilities: ['weight'],
@@ -75,6 +92,8 @@ export default async function DriversPage() {
     // Tier 5 is heuristic, we can push a synthetic one
     unifiedDrivers.push({
       id: 'TIER5_BETA_TRIAL',
+      title: 'Beta Trial Fuzzer (Heuristics)',
+      supportedHardware: ['Unknown hardware matching "scale", "bmi", "weight", etc.'],
       brand: 'Unknown',
       model: 'Beta Trial Fuzzer',
       capabilities: ['weight'],
