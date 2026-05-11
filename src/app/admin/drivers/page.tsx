@@ -24,13 +24,12 @@ export default async function DriversPage() {
     cloudError = err.message;
   }
 
-  // Parse the unified drivers list
+  // Parse the unified drivers list entirely from the cloud
   const unifiedDrivers: any[] = [];
 
-  // Tier 0: Dynamic Cloud Overrides
   for (const [key, driver] of Object.entries(cloudDrivers)) {
-    if (driver.isDynamic) {
-      // Parse brand and model for dynamic drivers
+    if (driver.isDynamic || driver.tier === 0) {
+      // Tier 0: Dynamic Cloud Overrides (Parse legacy fallback fields)
       const brands = (driver.brand || 'Unknown').split('/').map((b: string) => b.trim());
       const models = (driver.model || 'Unknown').split('/').map((m: string) => m.trim());
       
@@ -51,58 +50,13 @@ export default async function DriversPage() {
         supportedHardware: hw,
         reason: 'Tier 0: Cloud Override',
       });
+    } else {
+      // Tiers 1-5: Static offline drivers synced to Firestore
+      unifiedDrivers.push({
+        ...driver,
+        id: key
+      });
     }
-  }
-
-  // Tiers 1-4: signature_registry.json
-  try {
-    const registry = require('../../../../../src/frontend/assets/signature_registry.json');
-
-    // Tier 1
-    for (const [manufId, drivers] of Object.entries(registry.tier1_payload)) {
-      for (const d of (drivers as any[])) {
-        unifiedDrivers.push({ ...d, id: d.driverId, tier: 1, reason: `Tier 1: Payload Fingerprint (${manufId})` });
-      }
-    }
-    // Tier 2
-    for (const [uuid, configs] of Object.entries(registry.tier2_gatt)) {
-      for (const d of (configs as any[])) {
-        unifiedDrivers.push({ ...d, id: d.driverId, tier: 2, reason: `Tier 2: UUID + Name Combo (${uuid})` });
-      }
-    }
-    // Tier 3
-    for (const [aliasPattern, d] of Object.entries(registry.tier3_alias)) {
-      unifiedDrivers.push({ ...(d as any), id: (d as any).driverId, tier: 3, reason: `Tier 3: Name Alias (${aliasPattern})` });
-    }
-    // Tier 4 is generic, we can push a synthetic one
-    unifiedDrivers.push({
-      id: 'Generic_GATT_V1',
-      title: 'Generic Standard BLE (GATT)',
-      supportedHardware: ['Standard 181d BLE Scales (Multiple Brands)'],
-      brand: 'Generic',
-      model: 'Standard BLE Scale',
-      capabilities: ['weight'],
-      schema: null,
-      protocol: 'Generic GATT (181d)',
-      tier: 4,
-      reason: 'Tier 4: Generic BLE Standard (181d)'
-    });
-    // Tier 5 is heuristic, we can push a synthetic one
-    unifiedDrivers.push({
-      id: 'TIER5_BETA_TRIAL',
-      title: 'Beta Trial Fuzzer (Heuristics)',
-      supportedHardware: ['Unknown hardware matching "scale", "bmi", "weight", etc.'],
-      brand: 'Unknown',
-      model: 'Beta Trial Fuzzer',
-      capabilities: ['weight'],
-      schema: null,
-      protocol: 'OUI/Heuristic',
-      tier: 5,
-      reason: 'Tier 5: Beta Fuzzer Heuristics'
-    });
-
-  } catch (err: any) {
-    console.error('Failed to load signature_registry.json:', err);
   }
 
   const count = unifiedDrivers.length;
