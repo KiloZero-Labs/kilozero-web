@@ -115,50 +115,38 @@ function DispatcherTierBadge({ tier, reason }: { tier: number, reason: string })
   );
 }
 
-// Legacy distribution tiers for Tier 0
-type DistributionTier = 'unlisted' | 'optional' | 'auto_sync' | 'core';
+// Loading Modality for 5-Tier Architecture
+type LoadingModality = 'unavailable' | 'opt_in' | 'startup' | 'core';
 
-const TIERS: { value: DistributionTier; label: string; color: string; description: string }[] = [
-  { value: 'unlisted',   label: 'Unlisted',          color: '#6B7280', description: 'Not distributed — internal only' },
-  { value: 'optional',   label: 'Opt-in Download',   color: '#10b981', description: 'Beta users can download via Driver Library' },
-  { value: 'auto_sync',  label: 'Auto Sync',         color: '#0ea5e9', description: 'Pushed to devices automatically on boot' },
-  { value: 'core',       label: 'Core Installation', color: '#f59e0b', description: 'Compiled filter — active in all builds' },
+const MODALITIES: { value: LoadingModality; label: string; color: string; description: string }[] = [
+  { value: 'unavailable',label: 'Unavailable',       color: '#6B7280', description: 'Not distributed — internal only' },
+  { value: 'opt_in',     label: 'User Opt-In',       color: '#10b981', description: 'Beta users can download via Driver Library' },
+  { value: 'startup',    label: 'Load on Startup',   color: '#0ea5e9', description: 'Pushed to devices automatically on boot' },
+  { value: 'core',       label: 'Core Code',         color: '#f59e0b', description: 'Compiled filter — active in all builds' },
 ];
 
-function getTier(optionalDownload: boolean, pushAtStartup: boolean, isCoreDriver: boolean): DistributionTier {
-  if (isCoreDriver)     return 'core';
-  if (pushAtStartup)    return 'auto_sync';
-  if (optionalDownload) return 'optional';
-  return 'unlisted';
-}
-
-function deriveTierFlags(tier: DistributionTier) {
-  return {
-    optionalDownload: tier !== 'unlisted',
-    pushAtStartup:    tier === 'auto_sync' || tier === 'core',
-    isCoreDriver:     tier === 'core',
-  };
+function getModality(driver: any): LoadingModality {
+  if (driver.loadingModality) return driver.loadingModality as LoadingModality;
+  // Fallback for legacy DB documents
+  if (driver.isCoreDriver) return 'core';
+  if (driver.pushAtStartup) return 'startup';
+  if (driver.optionalDownload) return 'opt_in';
+  return 'unavailable';
 }
 
 // ── Driver row with accordion ──────────────────────────────────────────────────
 
 function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; initialData: any; adminEmail: string }) {
   const [expanded, setExpanded] = useState(false);
-  const [tier, setTier] = useState<DistributionTier>(
-    getTier(
-      initialData.optionalDownload ?? false,
-      initialData.pushAtStartup ?? false,
-      initialData.isCoreDriver ?? false,
-    )
-  );
+  const [modality, setModality] = useState<LoadingModality>(getModality(initialData));
   const [isDirty, setIsDirty] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle');
   const [, startTransition] = useTransition();
 
   const d = initialData;
 
-  const handleTierChange = (value: DistributionTier) => {
-    setTier(value);
+  const handleModalityChange = (value: LoadingModality) => {
+    setModality(value);
     setIsDirty(true);
     setSaveStatus('idle');
   };
@@ -166,13 +154,20 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
   const handleSave = async () => {
     setSaveStatus('saving');
     try {
-      const flags = deriveTierFlags(tier);
-      const updated = { ...d, mac: driverKey, ...flags };
+      // Clear legacy flags explicitly to ensure the new enum dictates behavior
+      const updated = { 
+        ...d, 
+        mac: driverKey, 
+        loadingModality: modality,
+        pushAtStartup: modality === 'startup', // keep for backwards compatibility just in case
+        optionalDownload: modality !== 'unavailable',
+        isCoreDriver: modality === 'core'
+      };
+      
       const res = await fetch(SYNC_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Verified server-side against ADMIN_WHITELIST via verifyWebAdminSession()
           ...(adminEmail ? { 'X-Admin-Email': adminEmail } : {}),
         },
         body: JSON.stringify(updated),
@@ -235,66 +230,57 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
         {/* Dispatcher Tier Badge */}
         <DispatcherTierBadge tier={d.tier} reason={d.reason} />
 
-        {/* Distribution Tier Dropdown (Only for Tier 0 Dynamic Drivers) */}
-        {d.tier === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: '175px' }}>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Distribution (OTA)</div>
-            <select
-              value={tier}
-              onChange={e => handleTierChange(e.target.value as DistributionTier)}
-              style={{
-                background: 'var(--surface-hover)',
-                border: `1px solid ${isDirty ? 'rgba(14,165,233,0.5)' : 'var(--border)'}`,
-                borderRadius: '6px',
-                color: TIERS.find(t => t.value === tier)?.color ?? 'var(--text-muted)',
-                fontWeight: 600,
-                fontSize: '0.82rem',
-                padding: '0.45rem 0.65rem',
-                cursor: 'pointer',
-                outline: 'none',
-                width: '100%',
-              }}
-            >
-              {TIERS.map(t => (
-                <option key={t.value} value={t.value} style={{ color: t.color, background: '#1a1a2e' }}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
-              {TIERS.find(t => t.value === tier)?.description}
-            </div>
-          </div>
-        ) : (
-          <div style={{ minWidth: '175px' }}></div>
-        )}
-
-        {/* Save Button (Only for Tier 0) */}
-        {d.tier === 0 ? (
-          <button
-            onClick={handleSave}
-            disabled={!isDirty || saveStatus === 'saving'}
+        {/* Loading Modality Dropdown */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: '175px' }}>
+          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Loading Modality</div>
+          <select
+            value={modality}
+            onChange={e => handleModalityChange(e.target.value as LoadingModality)}
+            onClick={e => e.stopPropagation()}
             style={{
-              display: 'flex', alignItems: 'center', gap: '0.4rem',
-              padding: '0.5rem 1rem', borderRadius: '6px', border: 'none',
-              fontWeight: 600, fontSize: '0.8rem', cursor: isDirty ? 'pointer' : 'not-allowed',
-              background: saveStatus === 'ok' ? '#10b981'
-                : saveStatus === 'error' ? '#ef4444'
-                : isDirty ? '#0ea5e9' : 'var(--surface-hover)',
-              color: isDirty || saveStatus !== 'idle' ? '#fff' : 'var(--text-muted)',
-              transition: 'all 0.2s',
-              opacity: !isDirty && saveStatus === 'idle' ? 0.5 : 1,
-              minWidth: '110px', justifyContent: 'center',
+              background: 'var(--surface-hover)',
+              border: `1px solid ${isDirty ? 'rgba(14,165,233,0.5)' : 'var(--border)'}`,
+              borderRadius: '6px',
+              color: MODALITIES.find(t => t.value === modality)?.color ?? 'var(--text-muted)',
+              fontWeight: 600,
+              padding: '0.4rem 0.5rem',
+              fontSize: '0.8rem',
+              outline: 'none',
+              cursor: 'pointer'
             }}
           >
-            {saveStatus === 'saving' ? <><FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
-              : saveStatus === 'ok' ? '✓ Saved'
-              : saveStatus === 'error' ? '✗ Error'
-              : <><FaSave /> Save</>}
-          </button>
-        ) : (
-          <div style={{ minWidth: '110px' }}></div>
-        )}
+            {MODALITIES.map(t => (
+              <option key={t.value} value={t.value} style={{ color: t.color, background: '#1a1a2e' }}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+            {MODALITIES.find(t => t.value === modality)?.description}
+          </div>
+        </div>
+        {/* Save Button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); handleSave(); }}
+          disabled={!isDirty || saveStatus === 'saving'}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.4rem',
+            padding: '0.5rem 1rem', borderRadius: '6px', border: 'none',
+            fontWeight: 600, fontSize: '0.8rem', cursor: isDirty ? 'pointer' : 'not-allowed',
+            background: saveStatus === 'ok' ? '#10b981'
+              : saveStatus === 'error' ? '#ef4444'
+              : isDirty ? '#0ea5e9' : 'var(--surface-hover)',
+            color: isDirty || saveStatus !== 'idle' ? '#fff' : 'var(--text-muted)',
+            transition: 'all 0.2s',
+            opacity: !isDirty && saveStatus === 'idle' ? 0.5 : 1,
+            minWidth: '110px', justifyContent: 'center',
+          }}
+        >
+          {saveStatus === 'saving' ? <><FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
+            : saveStatus === 'ok' ? '✓ Saved'
+            : saveStatus === 'error' ? '✗ Error'
+            : <><FaSave /> Save</>}
+        </button>
       </div>
 
       {/* ── Accordion body ────────────────────────────────────────── */}
