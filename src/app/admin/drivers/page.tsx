@@ -56,9 +56,7 @@ export default async function DriversPage() {
 
   // Tiers 1-4: signature_registry.json
   try {
-    const registryPath = path.join(process.cwd(), '../src/frontend/assets/signature_registry.json');
-    const registryRaw = fs.readFileSync(registryPath, 'utf8');
-    const registry = JSON.parse(registryRaw);
+    const registry = require('../../../../../src/frontend/assets/signature_registry.json');
 
     // Tier 1
     for (const [manufId, drivers] of Object.entries(registry.tier1_payload)) {
