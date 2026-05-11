@@ -22,6 +22,9 @@ export default async function AdminLayout({
           <Link href="/admin/telemetry" className="sidebar-link">
             <FaFlask /> Beta Telemetry
           </Link>
+          <Link href="/admin/everyday-telemetry" className="sidebar-link">
+            <FaServer /> Weigh-in Stats
+          </Link>
           <Link href="/admin/probe-workflow" className="sidebar-link">
             <FaProjectDiagram /> Probe Workflow
           </Link>
