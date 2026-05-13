@@ -97,12 +97,14 @@ function formatDate(ts: string) {
   } catch { return ts; }
 }
 
-const PROBE_ENDPOINT = 'https://us-central1-kilozero-prod.cloudfunctions.net/receiveProbe';
-
 async function downloadSubmission(submissionId: string, scaleBrand: string) {
   try {
-    const res = await fetch(`${PROBE_ENDPOINT}?scope=detail&id=${encodeURIComponent(submissionId)}`);
-    if (!res.ok) throw new Error(`Fetch failed: ${res.statusText}`);
+    // Use same-origin API proxy to avoid CORS issues with direct cloud function calls
+    const res = await fetch(`/api/telemetry/${encodeURIComponent(submissionId)}`);
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(errBody.error || `Fetch failed: ${res.statusText}`);
+    }
     const data = await res.json();
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
