@@ -38,6 +38,8 @@ const SCHEMA_FIELDS = [
     { name: 'impedanceByteLength', type: '2 | 4?', desc: 'Width of impedance integer' },
     { name: 'impedanceEndian', type: "'BE' | 'LE'?", desc: 'Impedance byte order' },
     { name: 'impedanceTransform', type: 'ImpedanceTransform?', desc: 'Linear transform for proprietary scales' },
+    { name: 'requireImpedanceForStability', type: 'boolean?', desc: 'Hold connection until BIA reading' },
+    { name: 'impedanceTimeoutMs', type: 'number?', desc: 'Max wait time for BIA reading' },
   ]},
   { section: 'Metadata', fields: [
     { name: 'stabilityRating', type: 'number?', desc: '0-5 maturity rating' },
@@ -62,6 +64,8 @@ const V2_PHASES = [
     desc: 'User steps on again. Discovery capture must find weight at same offset/endian/multiplier. Optional proportionality test.' },
   { id: '5', title: 'BF & Impedance', icon: '⚡', color: '#0ea5e9',
     desc: 'BF% search (×10, ×100). Impedance sweep (150–900Ω range, 2-byte & 4-byte, BE/LE).' },
+  { id: '5b', title: 'Temporal Gap Analysis', icon: '⏱️', color: '#f43f5e',
+    desc: 'Measures delay between weight lock and BIA impedance values. Dynamically calculates impedance timeout bounds for schema generation.' },
   { id: '6', title: 'Stability Detection', icon: '🏁', color: '#10b981',
     desc: 'Transition analysis: find byte that changes late and stays constant (e.g. 0x00→0x01). Canonical stability signal.' },
 ];
@@ -116,7 +120,7 @@ export default function ProbeWorkflowClient({ engineSource, engineError, schemaV
     <div>
       <div className="admin-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <h1 style={{ margin: 0 }}>Probe Workflow</h1>
+          <h1 style={{ margin: 0 }}>Decoder Pipeline</h1>
           {schemaVersion && (
             <span style={{
               background: 'rgba(14,165,233,0.15)', color: '#0ea5e9',
@@ -128,7 +132,7 @@ export default function ProbeWorkflowClient({ engineSource, engineError, schemaV
             </span>
           )}
         </div>
-        <p>Protocol-agnostic BLE scale discovery — multi-phase inference with entropy analysis &amp; cross-validation</p>
+        <p>Protocol-agnostic BLE Scale Decoder &mdash; multi-phase inference with entropy analysis &amp; cross-validation</p>
       </div>
 
       {/* ── V2 Pipeline Overview ── */}
@@ -357,7 +361,7 @@ export default function ProbeWorkflowClient({ engineSource, engineError, schemaV
           {[
             { step: '1', label: 'Schema Generated', desc: 'KiloZeroDriverSchema saved locally', color: '#3b82f6' },
             { step: '2', label: 'Telemetry Sent', desc: 'onProbeComplete callback at wizard end', color: '#8b5cf6' },
-            { step: '3', label: 'Cloud Review', desc: 'Admin reviews in Beta Telemetry', color: '#f59e0b' },
+            { step: '3', label: 'Cloud Review', desc: 'Admin reviews in Decoder Lab Reports', color: '#f59e0b' },
             { step: '4', label: 'N=5 Graduation', desc: '5 matching schemas \u2192 promoted', color: '#22c55e' },
             { step: '5', label: 'OTA Distribution', desc: 'Graduated driver pushed to all', color: '#ef4444' },
           ].map((s) => (

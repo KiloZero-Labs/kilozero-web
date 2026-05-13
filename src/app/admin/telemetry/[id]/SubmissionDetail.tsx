@@ -179,7 +179,7 @@ export default function SubmissionDetail({ submission }: { submission: Submissio
     // Schema version
     if (sub.proberSchemaVersion) {
       insights.push({
-        icon: '🏷', label: 'Prober Schema',
+        icon: '🏷', label: 'Decoder Schema',
         detail: `v${sub.proberSchemaVersion}`,
         color: '#6366f1',
       });

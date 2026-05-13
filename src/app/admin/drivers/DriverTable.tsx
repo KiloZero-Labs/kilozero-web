@@ -141,6 +141,7 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
   const [modality, setModality] = useState<LoadingModality>(getModality(initialData));
   const [isDirty, setIsDirty] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle');
+  const [showRaw, setShowRaw] = useState(false);
   const [, startTransition] = useTransition();
 
   const d = initialData;
@@ -321,18 +322,54 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
             <UUIDBlock label="Write UUIDs" uuids={d.writeUUIDs} />
           </div>
 
-          {/* Schema + Notes */}
+          {/* Schema + Notes + Protocol Details */}
           <div>
-            {d.schema && (
-              <div style={{ marginBottom: '0.75rem' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Dynamic Schema</div>
-                <div style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#a5f3fc', lineHeight: 1.7 }}>
-                  {Object.entries(d.schema).map(([k, v]) => (
-                    <div key={k}><span style={{ color: 'var(--text-muted)' }}>{k}: </span>{String(v)}</div>
-                  ))}
-                </div>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Communication Protocol</div>
+              <div style={{
+                background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.75rem',
+                fontFamily: 'monospace', fontSize: '0.72rem', color: '#a5f3fc', lineHeight: 1.7
+              }}>
+                {(() => {
+                  const s = d.pipeline ? d : d.schema || {};
+                  const hasDetails = Object.keys(s).length > 0 && (s.weightByteOffset !== undefined || s.characteristic);
+                  if (!hasDetails) return <div style={{ color: 'var(--text-muted)' }}>No low-level schema defined</div>;
+
+                  return (
+                    <>
+                      {s.pipeline && <div><span style={{ color: 'var(--text-muted)' }}>Pipeline: </span>{s.pipeline}</div>}
+                      {s.packetGuardHex && <div><span style={{ color: 'var(--text-muted)' }}>Packet Guard: </span><span style={{ color: '#fca5a5' }}>0x{s.packetGuardHex}</span></div>}
+                      {s.initHandshakeHex && <div><span style={{ color: 'var(--text-muted)' }}>Init Handshake: </span><span style={{ color: '#fca5a5' }}>0x{s.initHandshakeHex}</span></div>}
+                      
+                      <div style={{ marginTop: '0.5rem', marginBottom: '0.2rem', color: '#38bdf8', fontWeight: 700 }}>Weight Extraction</div>
+                      {s.weightByteOffset !== undefined && <div><span style={{ color: 'var(--text-muted)' }}>Offset: </span>Byte {s.weightByteOffset}</div>}
+                      {s.weightByteLength && <div><span style={{ color: 'var(--text-muted)' }}>Length: </span>{s.weightByteLength} bytes</div>}
+                      {s.weightEndian && <div><span style={{ color: 'var(--text-muted)' }}>Endianness: </span>{s.weightEndian}</div>}
+                      {s.weightMultiplier && <div><span style={{ color: 'var(--text-muted)' }}>Multiplier: </span>{s.weightMultiplier}</div>}
+
+                      {(s.stabilityByteOffset !== undefined || s.stabilityByteValue !== undefined) && (
+                        <>
+                          <div style={{ marginTop: '0.5rem', marginBottom: '0.2rem', color: '#10b981', fontWeight: 700 }}>Stability Detection</div>
+                          {s.stabilityByteOffset !== undefined && <div><span style={{ color: 'var(--text-muted)' }}>Offset: </span>Byte {s.stabilityByteOffset}</div>}
+                          {s.stabilityByteValue !== undefined && <div><span style={{ color: 'var(--text-muted)' }}>Lock Value: </span>{JSON.stringify(s.stabilityByteValue)}</div>}
+                          {s.stabilityByteMask !== undefined && <div><span style={{ color: 'var(--text-muted)' }}>Bitmask: </span>0x{s.stabilityByteMask.toString(16)}</div>}
+                        </>
+                      )}
+
+                      {s.impedanceByteOffset !== undefined && (
+                        <>
+                          <div style={{ marginTop: '0.5rem', marginBottom: '0.2rem', color: '#8b5cf6', fontWeight: 700 }}>BIA / Impedance</div>
+                          <div><span style={{ color: 'var(--text-muted)' }}>Offset: </span>Byte {s.impedanceByteOffset}</div>
+                          {s.impedanceByteLength && <div><span style={{ color: 'var(--text-muted)' }}>Length: </span>{s.impedanceByteLength} bytes</div>}
+                          {s.impedanceEndian && <div><span style={{ color: 'var(--text-muted)' }}>Endianness: </span>{s.impedanceEndian}</div>}
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
-            )}
+            </div>
+
             {d.notes && (
               <div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Notes</div>
@@ -345,6 +382,70 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
                 {d.approvedAt && <> · {new Date(d.approvedAt).toLocaleDateString()}</>}
               </div>
             )}
+            
+            <div style={{ marginTop: '1.5rem' }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowRaw(true); }}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.1)', border: '1px solid #38bdf8', color: '#38bdf8',
+                  padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600,
+                  cursor: 'pointer', transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.2)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.1)')}
+              >
+                View Raw JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Raw JSON Modal ────────────────────────────────────────── */}
+      {showRaw && (
+        <div 
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)', zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '2rem'
+          }}
+          onClick={(e) => { e.stopPropagation(); setShowRaw(false); }}
+        >
+          <div 
+            style={{
+              background: '#0f172a', border: '1px solid #334155', borderRadius: '12px',
+              width: '100%', maxWidth: '800px', maxHeight: '85vh',
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{
+              padding: '1rem 1.5rem', borderBottom: '1px solid #334155',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+              <h3 style={{ margin: 0, color: '#f8fafc', fontSize: '1.1rem' }}>Raw Driver Payload: {d.id || driverKey}</h3>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setShowRaw(false); }}
+                style={{
+                  background: 'transparent', border: 'none', color: '#94a3b8',
+                  fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem'
+                }}
+              >×</button>
+            </div>
+            <div style={{
+              padding: '1.5rem', overflowY: 'auto', background: '#020617',
+              borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px'
+            }}>
+              <pre style={{
+                margin: 0, color: '#a5f3fc', fontSize: '0.85rem',
+                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                whiteSpace: 'pre-wrap', wordBreak: 'break-all'
+              }}>
+                {JSON.stringify(d, null, 2)}
+              </pre>
+            </div>
           </div>
         </div>
       )}

@@ -28,9 +28,9 @@ export default async function TelemetryPage() {
   return (
     <div>
       <div className="admin-header">
-        <h1>Beta Telemetry</h1>
+        <h1>Decoder Lab Reports</h1>
         <p>
-          {submissions.length} submission{submissions.length !== 1 ? 's' : ''} from beta testers
+          {submissions.length} submission{submissions.length !== 1 ? 's' : ''} from lab contributors
           {cloudError && (
             <span style={{ color: 'var(--danger)', marginLeft: '1rem' }}>
               ⚠ Cloud error: {cloudError}

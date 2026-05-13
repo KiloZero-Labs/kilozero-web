@@ -40,7 +40,7 @@ export default function PrivacyPolicyPage() {
           <li><strong>Local Execution:</strong> The interaction with Health Connect occurs directly between the KiloZero App on your device and the Android Health Connect system.</li>
         </ul>
 
-        <h3 style={{ fontSize: '1.3rem', color: '#e6edf3', marginTop: '1.5rem', marginBottom: '0.5rem' }}>c. Opt-In Beta Telemetry & Hardware Logs</h3>
+        <h3 style={{ fontSize: '1.3rem', color: '#e6edf3', marginTop: '1.5rem', marginBottom: '0.5rem' }}>c. Opt-In Scale Decoder Telemetry & Hardware Logs</h3>
         <p style={{ lineHeight: '1.6' }}>
           To improve our universal Bluetooth scale drivers, KiloZero includes an <strong>opt-in</strong> telemetry feature. If (and only if) you explicitly grant permission within the app settings, KiloZero will transmit diagnostic hardware data to our secure Google Cloud backend.
         </p>

@@ -596,7 +596,7 @@ export class InferenceEngine {
   }
 
   // ─────────────────────────────────────────────────────────────────
-  // Scale Discovery v2 — Multi-phase inference with baseline diffing
+  // Scale Decoder v2 — Multi-phase inference with baseline diffing
   // ─────────────────────────────────────────────────────────────────
 
   /**

@@ -44,7 +44,7 @@ export default async function EverydayTelemetryPage() {
   return (
     <div>
       <div className="admin-header">
-        <h1>Weigh-In Statistics (Beta Testers)</h1>
+        <h1>Weigh-In Statistics (Lab Contributors)</h1>
         <p>
           {stats.length} telemetry record{stats.length !== 1 ? 's' : ''} received
           {cloudError && (

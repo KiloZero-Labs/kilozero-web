@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { FaChevronDown, FaChevronRight, FaCheckCircle, FaTimesCircle, FaMicrochip, FaFlask, FaSearch, FaFilter, FaSortAmountDown, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaChevronDown, FaChevronRight, FaCheckCircle, FaTimesCircle, FaMicrochip, FaFlask, FaSearch, FaFilter, FaSortAmountDown, FaExternalLinkAlt, FaDownload } from 'react-icons/fa';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -95,6 +95,28 @@ function formatDate(ts: string) {
     const d = new Date(ts);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   } catch { return ts; }
+}
+
+const PROBE_ENDPOINT = 'https://us-central1-kilozero-prod.cloudfunctions.net/receiveProbe';
+
+async function downloadSubmission(submissionId: string, scaleBrand: string) {
+  try {
+    const res = await fetch(`${PROBE_ENDPOINT}?scope=detail&id=${encodeURIComponent(submissionId)}`);
+    if (!res.ok) throw new Error(`Fetch failed: ${res.statusText}`);
+    const data = await res.json();
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${scaleBrand || 'submission'}_${submissionId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err: any) {
+    alert(`Download failed: ${err.message}`);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -268,7 +290,7 @@ export default function TelemetryDashboard({ submissions }: { submissions: Submi
           background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)',
         }}>
           {submissions.length === 0
-            ? '📡 No probe submissions yet. Waiting for beta testers...'
+            ? '📡 No decoder submissions yet. Waiting for lab contributors...'
             : '🔍 No submissions match your filters.'
           }
         </div>
@@ -402,7 +424,21 @@ export default function TelemetryDashboard({ submissions }: { submissions: Submi
                               {sub.failureMode || sub.comment || '—'}
                             </div>
 
-                            <div style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center' }}>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); downloadSubmission(sub.id, sub.scaleBrand); }}
+                                title="Download full submission as JSON"
+                                style={{
+                                  background: 'none', border: 'none', cursor: 'pointer',
+                                  color: '#22c55e', fontSize: '0.75rem',
+                                  display: 'inline-flex', alignItems: 'center', opacity: 0.7,
+                                  transition: 'opacity 0.15s', padding: '0.2rem',
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                                onMouseLeave={e => (e.currentTarget.style.opacity = '0.7')}
+                              >
+                                <FaDownload size={11} />
+                              </button>
                               <a
                                 href={`/admin/telemetry/${sub.id}`}
                                 target="_blank"
@@ -411,7 +447,7 @@ export default function TelemetryDashboard({ submissions }: { submissions: Submi
                                 title="Open in new window"
                                 style={{
                                   color: '#3b82f6', fontSize: '0.75rem',
-                                  display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+                                  display: 'inline-flex', alignItems: 'center',
                                   textDecoration: 'none', opacity: 0.7,
                                   transition: 'opacity 0.15s',
                                 }}
