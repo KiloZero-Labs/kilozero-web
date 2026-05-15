@@ -22,6 +22,7 @@ interface Submission {
   comment: string;
   trafficLogSize: number;
   hasDynamicSchema: boolean;
+  proberSchemaVersion: string | null;
   status: string;
   timestamp: string;
 }
@@ -476,7 +477,7 @@ export default function TelemetryDashboard({ submissions }: { submissions: Submi
                                 <div><strong style={{ color: 'var(--text-muted)' }}>Driver:</strong> {sub.driverId}</div>
                                 <div><strong style={{ color: 'var(--text-muted)' }}>Driver Rating:</strong> <StarRating rating={sub.driverRating} /></div>
                                 <div><strong style={{ color: 'var(--text-muted)' }}>Traffic Log:</strong> {sub.trafficLogSize} packets</div>
-                                <div><strong style={{ color: 'var(--text-muted)' }}>Schema:</strong> {sub.hasDynamicSchema ? '✅ Discovered' : '—'}</div>
+                                <div><strong style={{ color: 'var(--text-muted)' }}>Schema:</strong> {sub.proberSchemaVersion ? `v${sub.proberSchemaVersion}` : '—'}{sub.hasDynamicSchema ? ' · ✅ Driver Discovered' : ''}</div>
                               </div>
                               {sub.failureMode && (
                                 <div style={{ marginTop: '0.5rem' }}>

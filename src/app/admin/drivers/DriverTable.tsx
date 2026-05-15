@@ -5,7 +5,6 @@
 import { useState, useTransition } from 'react';
 import { FaChevronDown, FaChevronRight, FaSave, FaSpinner, FaDownload } from 'react-icons/fa';
 
-const SYNC_ENDPOINT = 'https://us-central1-kilozero-prod.cloudfunctions.net/syncDrivers';
 
 // ── Visual helpers ─────────────────────────────────────────────────────────────
 
@@ -165,20 +164,27 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
         isCoreDriver: modality === 'core'
       };
       
-      const res = await fetch(SYNC_ENDPOINT, {
+      const res = await fetch('/api/drivers/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(adminEmail ? { 'X-Admin-Email': adminEmail } : {}),
         },
         body: JSON.stringify(updated),
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) {
+        let detail = res.statusText;
+        try { const body = await res.json(); detail = body.message || body.error || detail; } catch {}
+        throw new Error(`${res.status}: ${detail}`);
+      }
       setSaveStatus('ok');
       setIsDirty(false);
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch {
+    } catch (err: any) {
       setSaveStatus('error');
+      console.error(`[DriverTable] Save failed for ${driverKey}:`, err.message);
+      alert(`Save failed for ${d.title || driverKey}:\n${err.message}`);
+      // Auto-clear error state so the button recovers
+      setTimeout(() => setSaveStatus('idle'), 4000);
     }
   };
 
