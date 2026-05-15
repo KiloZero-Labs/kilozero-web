@@ -4,6 +4,7 @@
 
 import { useState, useTransition } from 'react';
 import { FaChevronDown, FaChevronRight, FaSave, FaSpinner, FaDownload } from 'react-icons/fa';
+import DriverSchemaCard from '../components/DriverSchemaCard';
 
 
 // ── Visual helpers ─────────────────────────────────────────────────────────────
@@ -41,17 +42,7 @@ function TypePill({ type }: { type: string }) {
   );
 }
 
-function UUIDBlock({ label, uuids }: { label: string; uuids: string[] }) {
-  if (!uuids || uuids.length === 0) return null;
-  return (
-    <div style={{ marginBottom: '0.75rem' }}>
-      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{label}</div>
-      {uuids.map((u, i) => (
-        <div key={i} style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#38bdf8' }}>{u}</div>
-      ))}
-    </div>
-  );
-}
+
 
 function DownloadAllButton({ drivers }: { drivers: any[] }) {
   const handleDownload = () => {
@@ -296,13 +287,11 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
           borderTop: '1px solid var(--border)',
           padding: '1rem 1.5rem',
           background: 'rgba(15, 23, 42, 0.4)',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: '1.5rem',
+          display: 'flex', flexDirection: 'column', gap: '1rem',
         }}>
-          {/* Hardware & Protocol */}
-          <div>
-            <div style={{ marginBottom: '1.25rem' }}>
+          {/* Top row: Hardware info + Notes */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Supported Hardware</div>
               {d.supportedHardware && d.supportedHardware.length > 0 ? (
                 <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem', color: '#e2e8f0', lineHeight: 1.5 }}>
@@ -314,82 +303,31 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>—</div>
               )}
             </div>
-            
             <div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Protocol</div>
-              <div style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>{d.protocol || '—'}</div>
+              {d.notes && (
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Notes</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>{d.notes}</div>
+                </div>
+              )}
+              {d.approvedBy && (
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  Approved by <span style={{ color: '#0ea5e9' }}>{d.approvedBy}</span>
+                  {d.approvedAt && <> · {new Date(d.approvedAt).toLocaleDateString()}</>}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* UUIDs */}
+          {/* Driver Schema Card — unified structured display */}
+          <DriverSchemaCard
+            schema={d.pipeline ? d : d.schema || d}
+            title="Driver Schema"
+            accentColor="#38bdf8"
+          />
+
+          {/* Raw JSON button */}
           <div>
-            <UUIDBlock label="Service UUIDs" uuids={d.serviceUUIDs} />
-            <UUIDBlock label="Notify UUIDs" uuids={d.notifyUUIDs} />
-            <UUIDBlock label="Write UUIDs" uuids={d.writeUUIDs} />
-          </div>
-
-          {/* Schema + Notes + Protocol Details */}
-          <div>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Communication Protocol</div>
-              <div style={{
-                background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.75rem',
-                fontFamily: 'monospace', fontSize: '0.72rem', color: '#a5f3fc', lineHeight: 1.7
-              }}>
-                {(() => {
-                  const s = d.pipeline ? d : d.schema || {};
-                  const hasDetails = Object.keys(s).length > 0 && (s.weightByteOffset !== undefined || s.characteristic);
-                  if (!hasDetails) return <div style={{ color: 'var(--text-muted)' }}>No low-level schema defined</div>;
-
-                  return (
-                    <>
-                      {s.pipeline && <div><span style={{ color: 'var(--text-muted)' }}>Pipeline: </span>{s.pipeline}</div>}
-                      {s.packetGuardHex && <div><span style={{ color: 'var(--text-muted)' }}>Packet Guard: </span><span style={{ color: '#fca5a5' }}>0x{s.packetGuardHex}</span></div>}
-                      {s.initHandshakeHex && <div><span style={{ color: 'var(--text-muted)' }}>Init Handshake: </span><span style={{ color: '#fca5a5' }}>0x{s.initHandshakeHex}</span></div>}
-                      
-                      <div style={{ marginTop: '0.5rem', marginBottom: '0.2rem', color: '#38bdf8', fontWeight: 700 }}>Weight Extraction</div>
-                      {s.weightByteOffset !== undefined && <div><span style={{ color: 'var(--text-muted)' }}>Offset: </span>Byte {s.weightByteOffset}</div>}
-                      {s.weightByteLength && <div><span style={{ color: 'var(--text-muted)' }}>Length: </span>{s.weightByteLength} bytes</div>}
-                      {s.weightEndian && <div><span style={{ color: 'var(--text-muted)' }}>Endianness: </span>{s.weightEndian}</div>}
-                      {s.weightMultiplier && <div><span style={{ color: 'var(--text-muted)' }}>Multiplier: </span>{s.weightMultiplier}</div>}
-
-                      {(s.stabilityByteOffset !== undefined || s.stabilityByteValue !== undefined) && (
-                        <>
-                          <div style={{ marginTop: '0.5rem', marginBottom: '0.2rem', color: '#10b981', fontWeight: 700 }}>Stability Detection</div>
-                          {s.stabilityByteOffset !== undefined && <div><span style={{ color: 'var(--text-muted)' }}>Offset: </span>Byte {s.stabilityByteOffset}</div>}
-                          {s.stabilityByteValue !== undefined && <div><span style={{ color: 'var(--text-muted)' }}>Lock Value: </span>{JSON.stringify(s.stabilityByteValue)}</div>}
-                          {s.stabilityByteMask !== undefined && <div><span style={{ color: 'var(--text-muted)' }}>Bitmask: </span>0x{s.stabilityByteMask.toString(16)}</div>}
-                        </>
-                      )}
-
-                      {s.impedanceByteOffset !== undefined && (
-                        <>
-                          <div style={{ marginTop: '0.5rem', marginBottom: '0.2rem', color: '#8b5cf6', fontWeight: 700 }}>BIA / Impedance</div>
-                          <div><span style={{ color: 'var(--text-muted)' }}>Offset: </span>Byte {s.impedanceByteOffset}</div>
-                          {s.impedanceByteLength && <div><span style={{ color: 'var(--text-muted)' }}>Length: </span>{s.impedanceByteLength} bytes</div>}
-                          {s.impedanceEndian && <div><span style={{ color: 'var(--text-muted)' }}>Endianness: </span>{s.impedanceEndian}</div>}
-                        </>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {d.notes && (
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Notes</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>{d.notes}</div>
-              </div>
-            )}
-            {d.approvedBy && (
-              <div style={{ marginTop: '0.75rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                Approved by <span style={{ color: '#0ea5e9' }}>{d.approvedBy}</span>
-                {d.approvedAt && <> · {new Date(d.approvedAt).toLocaleDateString()}</>}
-              </div>
-            )}
-            
-            <div style={{ marginTop: '1.5rem' }}>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowRaw(true); }}
                 style={{
@@ -402,7 +340,6 @@ function DriverRow({ driverKey, initialData, adminEmail }: { driverKey: string; 
               >
                 View Raw JSON
               </button>
-            </div>
           </div>
         </div>
       )}

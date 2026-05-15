@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { FaCheckCircle, FaTimesCircle, FaChevronRight } from 'react-icons/fa';
+import DriverSchemaCard from '../../components/DriverSchemaCard';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -339,29 +340,40 @@ export default function SubmissionDetail({ submission }: { submission: Submissio
             </div>
           </div>
 
-          {/* Discovered Schema */}
+          {/* Discovered Schema — Structured Display */}
           {sub.dynamicSchema && (
             <div style={{
-              background: 'rgba(255,255,255,0.03)', borderRadius: 10,
-              padding: '1rem', border: '1px solid rgba(139,92,246,0.2)',
+              display: 'flex', flexDirection: 'column', gap: '0.75rem',
             }}>
-              <div onClick={() => setExpandedSchema(e => !e)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', transition: 'transform 0.2s', display: 'inline-block', transform: expandedSchema ? 'rotate(90deg)' : 'rotate(0deg)' }}>
-                  <FaChevronRight />
-                </span>
-                <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
-                  Discovered Schema
-                </h3>
+              <DriverSchemaCard
+                schema={sub.dynamicSchema}
+                title="Decoded Driver Schema"
+                accentColor="#8b5cf6"
+              />
+              
+              {/* Collapsible raw JSON for power users */}
+              <div style={{
+                background: 'rgba(255,255,255,0.03)', borderRadius: 10,
+                padding: '0.75rem 1rem', border: '1px solid rgba(255,255,255,0.06)',
+              }}>
+                <div onClick={() => setExpandedSchema(e => !e)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', transition: 'transform 0.2s', display: 'inline-block', transform: expandedSchema ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                    <FaChevronRight />
+                  </span>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Raw Schema JSON
+                  </span>
+                </div>
+                {expandedSchema && (
+                  <pre style={{
+                    marginTop: '0.75rem', padding: '0.75rem',
+                    background: 'rgba(0,0,0,0.3)', borderRadius: 6,
+                    fontSize: '0.72rem', lineHeight: 1.6, color: '#e2e8f0',
+                    overflow: 'auto', maxHeight: 400,
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  }}>{JSON.stringify(sub.dynamicSchema, null, 2)}</pre>
+                )}
               </div>
-              {expandedSchema && (
-                <pre style={{
-                  marginTop: '0.75rem', padding: '0.75rem',
-                  background: 'rgba(0,0,0,0.3)', borderRadius: 6,
-                  fontSize: '0.72rem', lineHeight: 1.6, color: '#e2e8f0',
-                  overflow: 'auto', maxHeight: 400,
-                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                }}>{JSON.stringify(sub.dynamicSchema, null, 2)}</pre>
-              )}
             </div>
           )}
         </div>
