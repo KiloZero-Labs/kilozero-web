@@ -137,25 +137,8 @@ function normalizeSchema(raw: Record<string, any>): Record<string, any> {
 export default function DriverSchemaCard({ schema, title = 'Driver Schema', accentColor = '#38bdf8', compact = false }: DriverSchemaCardProps) {
   const s = normalizeSchema(schema);
   
-  // Check if there's any meaningful data to display
-  const hasMeaningfulData = SECTIONS.some(sec =>
-    sec.requireAny.some(k => s[k] !== undefined && s[k] !== null)
-  );
-  
-  if (!hasMeaningfulData) {
-    return (
-      <div style={{
-        background: compact ? 'transparent' : 'rgba(255,255,255,0.03)',
-        borderRadius: compact ? 0 : 10,
-        padding: compact ? '0.5rem 0' : '1rem',
-        border: compact ? 'none' : '1px solid rgba(255,255,255,0.06)',
-      }}>
-        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-          No low-level schema parameters available
-        </div>
-      </div>
-    );
-  }
+  // Even if all values are null, we still render the full schema skeleton
+  // so the user can see what parameters exist and which are unconfigured.
 
   // Identity row
   const identityFields: [string, string][] = [];
@@ -203,16 +186,13 @@ export default function DriverSchemaCard({ schema, title = 'Driver Schema', acce
         </div>
       )}
 
-      {/* Protocol Sections */}
+      {/* Protocol Sections — always show all */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 260px))',
         gap: '0.5rem',
       }}>
         {SECTIONS.map(section => {
-          const hasData = section.requireAny.some(k => s[k] !== undefined && s[k] !== null);
-          if (!hasData) return null;
-
           return (
             <div key={section.title} style={{
               background: 'rgba(0,0,0,0.25)',
@@ -230,18 +210,19 @@ export default function DriverSchemaCard({ schema, title = 'Driver Schema', acce
               </div>
               {section.fields.map(field => {
                 const val = s[field.key];
-                if (val === undefined || val === null) return null;
-                const display = field.format ? field.format(val) : String(val);
+                const isEmpty = val === undefined || val === null;
+                const display = isEmpty ? '—' : (field.format ? field.format(val) : String(val));
                 return (
                   <div key={field.key} style={{
-                    display: 'flex', justifyContent: 'space-between',
+                    display: 'flex', gap: '0.5rem', alignItems: 'baseline',
                     padding: '0.15rem 0',
                     borderBottom: '1px solid rgba(255,255,255,0.04)',
                   }}>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{field.label}</span>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{field.label}</span>
                     <span style={{
-                      fontSize: '0.68rem', color: '#e2e8f0',
-                      fontFamily: 'monospace', fontWeight: 600,
+                      fontSize: '0.68rem',
+                      color: isEmpty ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
+                      fontFamily: 'monospace', fontWeight: isEmpty ? 400 : 600,
                     }}>{display}</span>
                   </div>
                 );
@@ -256,7 +237,7 @@ export default function DriverSchemaCard({ schema, title = 'Driver Schema', acce
         <div style={{
           marginTop: '0.5rem',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 260px))',
           gap: '0.5rem',
         }}>
           {[
