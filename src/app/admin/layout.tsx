@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FaServer, FaFlask, FaProjectDiagram, FaUsers, FaCogs } from "react-icons/fa";
+import { FaServer, FaCogs } from "react-icons/fa";
 import { auth, ADMIN_WHITELIST } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -19,23 +19,11 @@ export default async function AdminLayout({
           <Link href="/admin/drivers" className="sidebar-link">
             <FaServer /> Driver Management
           </Link>
-          <Link href="/admin/telemetry" className="sidebar-link">
-            <FaFlask /> Decoder Lab Reports
-          </Link>
           <Link href="/admin/devices" className="sidebar-link">
             <FaServer /> Hardware Weights
           </Link>
-          <Link href="/admin/everyday-telemetry" className="sidebar-link">
-            <FaServer /> Weigh-in Stats
-          </Link>
-          <Link href="/admin/probe-workflow" className="sidebar-link">
-            <FaProjectDiagram /> Decoder Pipeline
-          </Link>
-          <Link href="#" className="sidebar-link">
-            <FaUsers /> Users
-          </Link>
-          <Link href="#" className="sidebar-link">
-            <FaCogs /> Settings
+          <Link href="/admin/inference-engine" className="sidebar-link">
+            <FaCogs /> Inference Engine
           </Link>
         </nav>
       </aside>
